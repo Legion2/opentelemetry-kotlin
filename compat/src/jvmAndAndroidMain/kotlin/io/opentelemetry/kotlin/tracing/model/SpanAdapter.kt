@@ -102,11 +102,15 @@ internal class SpanAdapter(
         if (attributes != null) {
             attributes(container)
         }
-        val time = timestamp ?: clock.now()
         if (eventsImpl.size < spanLimitsConfig.effectiveEventCountLimit) {
-            eventsImpl.add(SpanEventCompatImpl(name, time, container))
+            eventsImpl.add(SpanEventCompatImpl(name, timestamp ?: clock.now(), container))
         }
-        impl.addEvent(name, container.otelJavaAttributes(), time, TimeUnit.NANOSECONDS)
+        // As with the span start: left unset, the SDK stamps the event with the clock it times the span by.
+        if (timestamp != null) {
+            impl.addEvent(name, container.otelJavaAttributes(), timestamp, TimeUnit.NANOSECONDS)
+        } else {
+            impl.addEvent(name, container.otelJavaAttributes())
+        }
     }
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
